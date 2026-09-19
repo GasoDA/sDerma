@@ -1,9 +1,9 @@
---@name sdermaExample
+--@name sdermashowcase
 --@author Gasolinae
 --@client
---@include sdermalib.txt
+--@include https://raw.githubusercontent.com/GasoDA/sDerma/refs/heads/main/sdermaexample.txt as sderma.txt
 
-require("sdermalib.txt")
+require("sderma.txt")
 
 if OWNER then
     enableHud(t,true)
@@ -15,9 +15,9 @@ if OWNER then
     -- we can then add Components/Elements
     local ph = p:addC("placeholder",0,0,p.sx,20)
     ph.color = Color(30,30,30,255)
-    ph:setText("Title")
+    ph:setText("sDerma Panel!")
     ph:setFont(render.createFont("arial",20))
-    ph:setTextPos(ph.x+85,ph.y)
+    ph:setTextPos(ph.x+45,ph.y)
     
     -- Built-in buttons
     local button = p:addC("button",p.sx*0.2,p.sy*0.5,100,50)
@@ -52,14 +52,15 @@ if OWNER then
     end
     
     -- Custom "Test" element with custom painting function and properties
-    local test = p:addC("test",p.sx*0.85,p.sy*0.85,p.sx*0.1,p.sy*0.1)
+    local test = p:addC("test",p.sx*0.85,p.sy*0.85,p.sx*0.3,p.sy*0.3)
     test.color = Color(0,161,255,255)
-    test:setText("G")
-    test:setTextPos(test.x-5,test.y-8)
     local test_ang = 0
+    
+    local mat_star = material.load("radon/starfall2")
     test.paint = function()
         render.setColor(test.color)
-        render.drawRectRotated(test.x, test.y, test.sx, test.sy, test_ang)
+        render.setMaterial(mat_star)
+        render.drawTexturedRectRotated(test.x, test.y, test.sx, test.sy, test_ang)
         sderma_funcs.drawText(test)
     end
     test.code = function()
