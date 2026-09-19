@@ -1,0 +1,72 @@
+--@name sdermaExample
+--@author Gasolinae
+--@client
+--@include sdermalib.txt
+
+require("sdermalib.txt")
+
+if OWNER then
+    enableHud(t,true)
+    
+    -- First we make a panel
+    local p = sderma.newpanel(500,500,200,200)
+    p:makepopup() --makes the panel visible
+    
+    -- we can then add Components/Elements
+    local ph = p:addC("placeholder",0,0,p.sx,20)
+    ph.color = Color(30,30,30,255)
+    ph:setText("Title")
+    ph:setFont(render.createFont("arial",20))
+    ph:setTextPos(ph.x+85,ph.y)
+    
+    -- Built-in buttons
+    local button = p:addC("button",p.sx*0.2,p.sy*0.5,100,50)
+    button.color = Color(40,40,255,255)
+    button:setText("Click Me!")
+    button:setTextPos(button.x+15,button.y+15)
+    local clicks = 0
+    button.onClick = function()
+        clicks = clicks + 1
+        print("Clicked "..clicks.." times")
+    end
+    
+    -- Built-in sliders
+    local slider = p:addC("slider",p.sx*0.3,50,p.sx*0.4,30)
+    slider.color = Color(20,20,20,255)
+    slider:setText("Off")
+    slider.onClick = function() -- Unless you want to add custom text effects like the following
+        slider.state = slider.state * -1 -- custom functions might not be necessary
+        if slider.state == -1 then
+            slider:setText("Off")
+        else
+            slider:setText("On")
+        end
+    end
+    
+    local close = p:addC("button",p.sx*0.9,0,p.sx*0.1,p.sy*0.1)
+    close.color = Color(255,0,0,255)
+    close:setText("X")
+    close:setTextPos(close.x+5,close.y)
+    close.onClick = function()
+        p:hide()
+    end
+    
+    -- Custom "Test" element with custom painting function and properties
+    local test = p:addC("test",p.sx*0.85,p.sy*0.85,p.sx*0.1,p.sy*0.1)
+    test.color = Color(0,161,255,255)
+    test:setText("G")
+    test:setTextPos(test.x-5,test.y-8)
+    local test_ang = 0
+    test.paint = function()
+        render.setColor(test.color)
+        render.drawRectRotated(test.x, test.y, test.sx, test.sy, test_ang)
+        sderma_funcs.drawText(test)
+    end
+    test.code = function()
+       test_ang = (test_ang + 1) %360
+    end
+        
+    hook.add("DrawHUD", "examplesderma", function() 
+        sderma.think() -- Must have it for it to work
+    end)
+end

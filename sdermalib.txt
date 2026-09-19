@@ -1,0 +1,204 @@
+--@name sDerma
+--@author Gasolinae
+--@client
+
+sderma = {}
+sderma_panels = {}
+sderma_funcs = {}
+sderma_funcs.__index = sderma_funcs
+
+-- functions
+sderma_funcs.makepopup = function(sderma_obj)
+    if !sderma_obj or !istable(sderma_obj) then return end
+    sderma_obj.visible = true
+end
+
+sderma_funcs.hide = function(sderma_obj)
+    if !sderma_obj or !istable(sderma_obj) then return end
+    sderma_obj.visible = false
+end
+
+--default paint function
+sderma_funcs.drawText = function(sderma_obj)
+    if sderma_obj.text then
+        render.setColor(sderma_obj.text.color)
+        if sderma_obj.text.font then
+        render.setFont(sderma_obj.text.font)
+        end
+        render.drawText(sderma_obj.text.x,sderma_obj.text.y,sderma_obj.text.text)
+    end
+end
+
+sderma_funcs.defaultpaint = function(sderma_obj)
+    render.setColor(sderma_obj.color)
+    render.drawRect(sderma_obj.x,sderma_obj.y,sderma_obj.sx,sderma_obj.sy)
+    sderma_funcs.drawText(sderma_obj)
+end
+
+sderma.defaultpaintslider = function(sderma_obj)
+    render.setColor(sderma_obj.color)
+    render.drawRect(sderma_obj.x,sderma_obj.y,sderma_obj.sx,sderma_obj.sy)
+    if sderma_obj.state == 1 then
+        render.setColor(sderma_obj.slidercolormax)
+        render.drawRect(sderma_obj.x+sderma_obj.sx*0.5,sderma_obj.y,sderma_obj.sx*0.5,sderma_obj.sy)
+    else
+        render.setColor(sderma_obj.slidercolormin)
+        render.drawRect(sderma_obj.x,sderma_obj.y,sderma_obj.sx*0.5,sderma_obj.sy)
+    end
+    sderma_funcs.drawText(sderma_obj)
+end
+
+sderma.think = function()
+    for id, panel in ipairs(sderma_panels) do
+        if !panel.visible then continue end
+        panel:paint()
+        for _, child in ipairs(panel.child) do
+            if child.visible then
+            child:paint()
+                if child.code then
+                    child:code()
+                end
+            end
+        end
+    end
+end
+
+sderma.newpanel = function(x,y,size_x,size_y,paintfunc,color)
+    x = x or 0
+    y = y or 0
+    size_x = size_x or 1
+    size_y = size_y or 1
+    color = color or Color(40,40,40,255)
+    paintfunc = paintfunc or sderma_funcs.defaultpaint
+    local new_panel = setmetatable({["x"] = x, ["y"] = y, ["sx"] = size_x, ["sy"] = size_y, ["paint"] = paintfunc, ["child"] = {}, ["visible"] = false, ["type"] = "panel", ["color"] = color}, sderma_funcs)
+    table.insert(sderma_panels, new_panel)
+    return new_panel
+end
+
+sderma_funcs.removeC = function(panel,id)
+    table.remove(panel.child,id)
+end
+
+sderma.remove = function(panelid)
+    table.remove(sderma_panels,panelid)
+end
+
+-- click and io funcs
+sdermaclicked = false
+sdermahasclicked = false
+
+hook.add("InputPressed", "sdermareadio", function(button) 
+    if button == MOUSE.MOUSE1 then
+       sdermaclicked = true
+    end    
+end)
+
+hook.add("InputReleased", "sdermareadio2", function(button) 
+    if button == MOUSE.MOUSE1 then
+       sdermaclicked = false
+       sdermahasclicked = false
+    end
+end)
+
+sderma_funcs.collideBox = function(sderma_obj)
+    if !input.getCursorVisible() then return end
+    local cx, cy = input.getCursorPos()
+    if cx > sderma_obj.x and cx < sderma_obj.x + sderma_obj.sx and cy > sderma_obj.y and cy < sderma_obj.y + sderma_obj.sy then
+        return true
+    else
+        return false
+    end
+end
+
+sderma_funcs.clicked = function(sderma_obj)
+    if sderma_funcs.collideBox(sderma_obj) and sdermaclicked == true and sdermahasclicked == false then
+        sdermahasclicked = true
+        return true
+    end
+end
+
+
+sderma_funcs.buttonfunc = function(sderma_obj)
+    if !input.getCursorVisible() then return end
+    local cx, cy = input.getCursorPos()
+    if sderma_obj.onClick then
+        if sderma_funcs.clicked(sderma_obj) then
+            sderma_obj.onClick()
+        end
+    end
+end
+
+sderma_funcs.sliderdefaultcode = function(sderma_obj)
+    sderma_obj.state = sderma_obj.state or -1
+    sderma_obj.state = sderma_obj.state * -1
+    if sderma_obj.state == -1 then
+        sderma_obj.out = sderma_obj.smin
+    else
+        sderma_obj.out = sderma_obj.smax
+    end
+end
+
+sderma_funcs.sliderfunc = function(sderma_obj)
+    if !input.getCursorVisible() then return end
+    local cx, cy = input.getCursorPos()
+    if sderma_obj.onClick then
+        if sderma_funcs.clicked(sderma_obj) then
+            sdermahasclicked = true
+            sderma_obj:onClick()
+        end
+    end
+end
+
+sderma_funcs.addC = function(sderma_obj,type,x,y,size_x,size_y,paintfunc,extra,color)
+    x = sderma_obj.x + x or sderma_obj.x
+    y = sderma_obj.y + y or sderma_obj.y
+    size_x = size_x or 1
+    size_y = size_y or 1
+    paintfunc = paintfunc or sderma_funcs.defaultpaint
+    color = color or Color(255,255,255,255)
+    local child = setmetatable({ ["type"] = type, ["x"] = x, ["y"] = y, ["sx"] = size_x, ["sy"] = size_y, ["paint"] = paintfunc, ["visible"] = true, ["color"] = color}, sderma_funcs)
+    if type == "slider" then
+        child.smin = 0
+        child.smax = 1
+        child.out = 0
+        child.state = -1
+        child.slidercolormin = Color(255,0,0,255)
+        child.slidercolormax = Color(0,255,0,255) 
+        child.paint = sderma.defaultpaintslider
+        child.onClick = sderma_funcs.sliderdefaultcode
+    end
+    child.id = #sderma_obj.child + 1
+    child.code = sderma_funcs[type.."func"]
+    child.parent = sderma_obj
+    table.insert(sderma_obj.child, child)
+    return child
+end
+
+sderma_funcs.setupText = function(sderma_obj)
+    sderma_obj.text = {["text"] = "",["color"] = Color(255,255,255,255), ["x"] = sderma_obj.x, ["y"] = sderma_obj.y}
+end
+
+sderma_funcs.setText = function(sderma_obj,text)
+    if !sderma_obj.text then sderma_obj:setupText() end
+    sderma_obj.text.text = text
+end
+
+sderma_funcs.setTextColor = function(sderma_obj,color)
+    if !sderma_obj.text then sderma_obj:setupText() end
+    sderma_obj.text.color = color
+end
+
+sderma_funcs.setTextPos = function(sderma_obj,posx,posy)
+    if !sderma_obj.text then sderma_obj:setupText() end
+    sderma_obj.text.x = posx
+    sderma_obj.text.y = posy
+end
+
+sderma_funcs.setColor = function(sderma_obj,color)
+    sderma_obj.color = color
+end
+
+sderma_funcs.setFont = function(sderma_obj,font)
+    if !sderma_obj.text then sderma_obj:setupText() end
+    sderma_obj.text.font = font
+end
