@@ -1,7 +1,7 @@
 --@name sdermashowcase
 --@author Gasolinae
 --@client
---@include https://raw.githubusercontent.com/GasoDA/sDerma/refs/heads/main/sdermaexample.txt as sderma.txt
+--@include https://raw.githubusercontent.com/GasoDA/sDerma/refs/heads/main/sdermalib.txt as sderma.txt
 
 require("sderma.txt")
 
